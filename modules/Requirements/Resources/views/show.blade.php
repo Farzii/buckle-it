@@ -2,13 +2,17 @@
 
 @section('content-header')
 <h1>
-    {{$requirement->reference_number .' '. $requirement->title}}
+    {{'['.$requirement->reference_number.']' .' '. $requirement->title}}
 </h1>
+<a href="{{route('admin.requirement.index')}}">
+    Back
+</a>
 @stop
 @section('script')
 <script src="{{asset('/modules/Requirements/js/custom.js')}}"></script>
 @stop
 @section('content')
+{!!Form::hidden('change-requirement-status',route('change-requirement-status'))!!}
 <div class="col-sm-12">
     <div class="row">
         <div class="col-sm-8">
@@ -40,8 +44,8 @@
                                     <div class="col-sm-2 text-right">
                                         <div class="row">
 
-                                            <a class="btn btn-primary" style=" vertical-align: top; margin-bottom: 5px;">
-                                                <i class="fa fa-comments"></i> <span class="badge">0</span>
+                                            <a class="btn btn-primary" onclick="getComments('{{URL::route('admin.requirement.getcomments',[$image->id,'requirement_image'])}}')" style=" vertical-align: top; margin-bottom: 5px;">
+                                                <i class="fa fa-comments"></i>
                                             </a>
                                             {!! Form::open( array('route' => array('file-delete', $image->id ),'role' => 'form','method' => 'Delete','onClick'=>"return confirm('Are you sure you want to delete?')")) !!}
                                             {!! Form::submit('Delete', ['class' => 'btn btn-danger']) !!}
@@ -111,84 +115,68 @@
             @foreach($childrens as $child)
             <div class="box">
                 <div class="box-body">
-                    <h4>
-                        {{'['.$child->reference_number .'] '. $child->title}}
-                        <a class="btn btn-link" onclick="addEditRequirement('{{$child->reference_number}}','{{$child->title}}','{{$child->description}}',{{$child->id}})" class="pull-right">
-                            <i class="fa fa-edit"></i>
-                        </a>
-                    </h4>
-                    <p>
-                        {{$child->description}}
-                    </p>
+                    <div class="col-sm-12 text-right">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default">Actions</button>
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="caret"></span>
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="btn btn-link" onclick="addEditRequirement('{{$child->reference_number}}','{{$child->title}}','{{$child->description}}',{{$child->id}})">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <div class="clearfix"></div>
+                                </li>
+                                <li class="text-center">
+                                    {!! Form::open( array('route' => array('admin.requirement.destroy', $child->id),'role' => 'form','method' => 'Delete','onClick'=>"return confirm('Are you sure you want to delete?')")) !!}
+                                    {!! Form::button('<i class="fa fa-trash"></i>', ['type'=>'submit','class' => 'btn btn-link']) !!}
+                                    {!! Form::close() !!}
+                                    <div class="clearfix"></div>
+                                </li>
+                                <div class="clearfix"></div>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <h4>
+                            {{'['.$child->reference_number .'] '. $child->title}}
+                        </h4>
+                        <p>
+                            {{$child->description}}
+                        </p>
+                    </div>
+                    <div class="clearfix"></div>
                 </div>
                 <div class="box-footer">
-                    <!-- Split button -->
-                    <div class="form-group">
-                        {!!Form::select('status',$status,$child->status,['class'=>'form-control'])!!}
+                    <div class="col-sm-12">
+                        <!-- Split button -->
+                        <div class="form-group">
+                            {!!Form::select('status',array_where($status, function ($key, $value) use ($child) {
+                            return ($key<=$child->status+1);
+                            }),$child->status,['class'=>'form-control requirement_status_change','id'=>$child->id])!!}
+                        </div>
+                        <div class="clearfix">
+                            <a class="btn btn-danger pull-left">
+                                Add Ticket
+                            </a>
+                            <a class="btn btn-link pull-right" onclick="getComments('{{URL::route('admin.requirement.getcomments',[$child->id,'main_requirement'])}}')" title="Comments">
+                                <i class="fa fa-comments"></i>
+                            </a>
+                        </div>
                     </div>
-                    <div class="clearfix">
-                        <a class="btn btn-danger pull-left">
-                            Add Ticket
-                        </a>
-                        <a class="btn btn-link pull-right" requirement_id="{{$child->id}}" title="Comments">
-                            <i class="fa fa-comments"></i>
-                        </a>
-                    </div>
+                    <div class="clearfix"></div>
                 </div>
+                <div class="clearfix"></div>
             </div>
             @endforeach
         </div>
     </div>
 </div>
 
-<div id="add-requirement-modal" class="modal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            {!!Form::open(['route'=>'admin.requirement.store'])!!}
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span></button>
-                <h4 class="modal-title">Add/Edit Requirement</h4>
-            </div>
-            <div class="modal-body">
-                {!!Form::hidden('requirement_id',0)!!}
-                {!!Form::hidden('parent_id',$requirement->id)!!}
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        {!!Form::label('reference_number','Reference Number')!!}
-                    </div>
-                    <div class="col-sm-12">
-                        {!!Form::text('reference_number','',['class'=>'form-control'])!!}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        {!!Form::label('title','Title')!!}
-                    </div>
-                    <div class="col-sm-12">
-                        {!!Form::text('title','',['class'=>'form-control'])!!}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        {!!Form::label('description','Description')!!}
-                    </div>
-                    <div class="col-sm-12">
-                        {!!Form::textarea('description','',['class'=>'form-control'])!!}
-                    </div>
-                </div>
-                <div class="clearfix"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary">Save changes</button>
-            </div>
-            {!!Form::close()!!}
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-</div>
+@include('requirements::partial.addrequirment',['parent_id'=>$requirement->id])
 
 <div id="comment_modal" class="modal">
     <div class="modal-dialog">
@@ -199,20 +187,21 @@
                     <span aria-hidden="true">×</span></button>
                 <h4 class="modal-title">Comments</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height:400px; overflow:auto">
                 {!!Form::hidden('type',0)!!}
                 {!!Form::hidden('item_id',0)!!}
                 <div class="form-group">
                     <div class="row">
                         <div class="col-sm-12">
-                            {!!Form::label('description','Description')!!}
+                            {!!Form::label('comment','Description*')!!}
                         </div>
                         <div class="col-sm-12">
-                            {!!Form::textarea('description','',['class'=>'form-control'])!!}
+                            {!!Form::textarea('comment','',['class'=>'form-control'])!!}
                         </div>
                     </div>
                 </div>
                 <div id="comments_list">
+
                 </div>
                 <div class="clearfix"></div>
             </div>

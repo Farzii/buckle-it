@@ -18,6 +18,8 @@ class CreateCommentsTable extends Migration
             $table->integer('item_id');
             $table->enum('type', ['requirement_image', 'requirement_file','main_requirement']);
             $table->text('comment');
+            $table->integer('user_created')->nullable();
+            $table->integer('user_updated')->nullable();
             $table->timestamps();
         });
     }

@@ -16,4 +16,16 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Modules\Requirements\Http\Con
         'as' => 'file-delete',
         'uses' => 'RequirementsController@fileDelete'
     ]);
+    Route::get('get-comments/{item_id}/{type}', [
+        'as' => 'admin.requirement.getcomments',
+        'uses' => 'CommentsController@index'
+    ]);
+    Route::post('store-comments', [
+        'as' => 'admin.requirement.addcomment',
+        'uses' => 'CommentsController@store'
+    ]);
+    Route::get('change-requirement-status', [
+        'as' => 'change-requirement-status',
+        'uses' => 'RequirementsController@changeStatus'
+    ]);
 });

@@ -7,6 +7,8 @@ class Comment extends Model
     protected $fillable = [
     	'item_id',
     	'type',
-    	'comment'
+    	'comment',
+        'user_created',
+        'user_updated'
     ];
 }

@@ -5,6 +5,7 @@ use Modules\Requirements\Entities\Requirement;
 use Pingpong\Admin\Controllers\BaseController;
 use Illuminate\Http\Request;
 use File;
+use DB;
 use Modules\Requirements\Entities\File as FileModel;
 
 class RequirementsController extends BaseController
@@ -19,7 +20,17 @@ class RequirementsController extends BaseController
 
     public function index()
     {
-        $requirements = Requirement::where('parent_id', 0)->orderBy('reference_number')->paginate(10);
+        $requirements = Requirement::
+            from('requirements as rq')
+            ->select('rq.*',
+                DB::raw('(select count(*) from requirements as child where rq.id=child.parent_id and status=0) as unstarted'),
+                DB::raw('(select count(*) from requirements as child where rq.id=child.parent_id and status=1) as inprocess'),
+                DB::raw('(select count(*) from requirements as child where rq.id=child.parent_id and status=2) as ready'),
+                DB::raw('(select count(*) from requirements as child where rq.id=child.parent_id and status=3) as completed')
+                )
+            ->where('rq.parent_id', 0)
+            ->orderBy('rq.reference_number')
+            ->paginate(10);
         return view('requirements::index', compact('requirements'));
     }
 
@@ -28,9 +39,26 @@ class RequirementsController extends BaseController
         $requirement = Requirement::find($id);
         $childrens = Requirement::where('parent_id', $id)->get();
         $status = $this->status;
-        $images = FileModel::where('item_id', $id)->where('type', 'requirement_image')->get();
+        $images = FileModel::where('item_id', $id)
+            ->where('type', 'requirement_image')
+            ->get();
         $files = FileModel::where('item_id', $id)->where('type', 'requirement_file')->get();
         return view('requirements::show', compact('requirement', 'childrens', 'status', 'images', 'files'));
+    }
+    
+    public function destroy($id)
+    {
+        $requirement = Requirement::find($id);
+        $requirement->delete();
+        return back();
+    }
+
+    public function changeStatus(Request $request)
+    {
+        $id = $request->get('id');
+        $status = $request->get('status');
+        Requirement::where('id', $id)->update(['status' => $status]);
+        return 1;
     }
 
     public function uplodImage(Request $request, $requriment_id)

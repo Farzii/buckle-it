@@ -1,7 +1,8 @@
 <?php
 
 $leftMenu = Menu::instance('admin-menu');
-$leftMenu->url('/admin/requirements', 'Requirements', [], 0, ['icon' => 'fa fa-dashboard']);
+
+$leftMenu->url('/admin/requirement', 'Requirements', [], 0, ['icon' => 'fa fa-dashboard']);
 $rightMenu = Menu::instance('admin-menu-right');
 
 /**
