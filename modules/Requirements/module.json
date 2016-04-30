@@ -1,0 +1,15 @@
+{
+    "name": "Requirements",
+    "alias": "requirements",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Requirements\\Providers\\RequirementsServiceProvider"
+    ],
+    "aliases":{},
+    "files": [
+        "start.php"
+    ]
+}
